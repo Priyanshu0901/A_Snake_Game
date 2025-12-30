@@ -65,6 +65,23 @@ void test_breathing_rainbow_update(DISPLAY_t * const me)
     hue_offset += 2; // Speed of rainbow movement
 }
 
+void DISPLAY_identify_layout(DISPLAY_t * const me) {
+    for (uint16_t i = 0; i < (DISPLAY_ROWS * DISPLAY_COLS); i++) {
+        // Clear buffer
+        memset(me->display_buffer, 0, sizeof(me->display_buffer));
+
+        // Treat the 2D buffer as 1D to see how the LEDs are physically mapped
+        PIXEL_t *flat_buffer = &me->display_buffer[0][0];
+
+        flat_buffer[i].pixels.red = 50; // Dim red
+
+        // Write the whole strip
+        WS2812B_write(&me->driver, flat_buffer, DISPLAY_ROWS * DISPLAY_COLS);
+
+        HAL_Delay(50);
+    }
+}
+
 void DISPLAY_test(DISPLAY_t * const me)
 {
     test_breathing_rainbow_update(me);

@@ -103,6 +103,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  DISPLAY_test(&display);
+//	  DISPLAY_identify_layout(&display);
   }
   /* USER CODE END 3 */
 }
