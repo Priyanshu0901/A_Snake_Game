@@ -13,9 +13,17 @@ void DISPLAY_ctor(DISPLAY_t * const me, GPIO_TypeDef *port, uint16_t pin)
 	WS2812B_ctor(&(me->driver), port, pin);
 }
 
-// Max raw color value (keep at 255 for full resolution)
-#define COLOR_WHEEL_RANGE 10
+// Example of a better Update Architecture
+void DISPLAY_update(DISPLAY_t * const me) {
+    // Post-processing (Optional: Brightness scaling)
 
+    // Physical Mapping (Handle zig-zag wiring if necessary)
+    // Flush to Hardware
+	WS2812B_write(&(me->driver), &me->display_buffer[0][0], DISPLAY_ROWS * DISPLAY_COLS);
+}
+
+// Max raw color value (keep at 255 for full resolution)
+#define COLOR_WHEEL_RANGE 2
 /**
  * @param hue: 0-255 color position
  * @param brightness: 0-255 (128 for half brightness)
@@ -85,7 +93,7 @@ void DISPLAY_identify_layout(DISPLAY_t * const me) {
 void DISPLAY_test(DISPLAY_t * const me)
 {
     test_breathing_rainbow_update(me);
-    WS2812B_write(&(me->driver), &me->display_buffer[0][0], DISPLAY_ROWS * DISPLAY_COLS);
+    DISPLAY_update(me);
 }
 
 

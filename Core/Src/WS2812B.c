@@ -16,7 +16,7 @@
 
 #define RES_10NS 50000 // Low Voltage Above 50μs // 50000 but it has to return and get the new buffer so
 
-#define ITTERATION_FACTOR 3
+#define ITTERATION_FACTOR 3 //-Ofast
 
 void WS2812B_ctor(WS2812B_t *const me, GPIO_TypeDef *port, uint16_t pin) {
 	me->port = port;
