@@ -22,8 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Display.h"
-#include "PCF8574.h"
-#include "debug_logger.h"
+#include "keypad_4_4.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,11 +95,11 @@ int main(void)
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
   DISPLAY_t display;
   DISPLAY_ctor(&display,WS2812B_D_GPIO_Port,WS2812B_D_Pin);
-  PCF8574_t PCF8574;
-  PCF8574_ctor(&PCF8574, &hi2c1, PCF8574_DEFAULT_ADDRESS);
-  printf("Hello World\r\n");
+  KEYPAD_t keypad;
+  KEYPAD_ctor(&keypad, &hi2c1);
 
   /* USER CODE END 2 */
 
@@ -112,6 +111,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  DISPLAY_test(&display);
+	  KEYPAD_read(&keypad);
+
   }
   /* USER CODE END 3 */
 }

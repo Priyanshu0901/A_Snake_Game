@@ -10,32 +10,31 @@
 
 #define I2C_TIMEOUT 100
 
-HAL_StatusTypeDef PCF8574_ctor(PCF8574_t * const me, I2C_HandleTypeDef *i2cHandle,
-		uint8_t address) {
+HAL_StatusTypeDef PCF8574_ctor(PCF8574_t * const me, I2C_HandleTypeDef *i2cHandle) {
 
 	me->i2cHandle = i2cHandle;
-	me->address = address;
+	me->address = PCF8574_DEFAULT_ADDRESS;
 
 	me->set_pins.pin_byte[0] = 0x00;
 
-	log_message("PCF8574", LOG_INFO, "Initializing meice at address 0x%02X", address);
+	log_message("PCF8574", LOG_INFO, "Initializing Device at address 0x%02X", me->address);
 	
 	// Try expected address first
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(i2cHandle, (address << 1), 1, I2C_TIMEOUT);
+	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(i2cHandle, (me->address << 1), 1, I2C_TIMEOUT);
 	
 	if (status != HAL_OK) {
-		log_message("PCF8574", LOG_WARN, "Device not found at 0x%02X, doing one-time sweep", address);
+		log_message("PCF8574", LOG_WARN, "Device not found at 0x%02X, doing one-time sweep", me->address);
 		
 		// One-time sweep through common PCF8574 addresses
 		for (uint8_t addr = 0x00; addr < 0x7F; addr++) {
 			status = HAL_I2C_IsDeviceReady(i2cHandle, (addr << 1), 1, I2C_TIMEOUT);
 			if (status == HAL_OK) {
 				me->address = addr;
-				log_message("PCF8574", LOG_INFO, "Found meice at 0x%02X", addr);
+				log_message("PCF8574", LOG_INFO, "Found Device at 0x%02X", addr);
 				break;
 			}
 			else {
-				log_message("PCF8574", LOG_WARN, "meice not found at 0x%02X", addr);
+				log_message("PCF8574", LOG_WARN, "Device not found at 0x%02X", addr);
 			}
 		}
 		

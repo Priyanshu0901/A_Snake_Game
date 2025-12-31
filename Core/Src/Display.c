@@ -23,7 +23,7 @@ void DISPLAY_update(DISPLAY_t * const me) {
 }
 
 // Max raw color value (keep at 255 for full resolution)
-#define COLOR_WHEEL_RANGE 2
+#define COLOR_WHEEL_RANGE 10
 /**
  * @param hue: 0-255 color position
  * @param brightness: 0-255 (128 for half brightness)

@@ -25,9 +25,9 @@
 #define PCF8574_SET_PIN(dev, pin, state) \
     do { \
         if (state) { \
-            (dev)->set_pins.pin_byte[0] |= (1 << (pin)); \
+            (dev)->set_pins.pin_byte[0] |= (1U << (pin)); \
         } else { \
-            (dev)->set_pins.pin_byte[0] &= ~(1 << (pin)); \
+            (dev)->set_pins.pin_byte[0] &= ~(1U << (pin)); \
         } \
     } while(0)
 
@@ -59,8 +59,7 @@ typedef struct {
 } PCF8574_t;
 
 
-HAL_StatusTypeDef PCF8574_ctor(PCF8574_t * const dev, I2C_HandleTypeDef *i2cHandle,
-		uint8_t address);
+HAL_StatusTypeDef PCF8574_ctor(PCF8574_t * const dev, I2C_HandleTypeDef *i2cHandle);
 
 HAL_StatusTypeDef PCF8574_write(PCF8574_t * const dev);
 HAL_StatusTypeDef PCF8574_read(PCF8574_t * const dev);
