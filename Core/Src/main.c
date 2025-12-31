@@ -93,6 +93,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   DISPLAY_t display;
   DISPLAY_ctor(&display,WS2812B_D_GPIO_Port,WS2812B_D_Pin);
+//  uint32_t last_time = HAL_GetTick();
+//  uint8_t count = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,6 +105,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  DISPLAY_test(&display);
+//	  ++count;
+//	  if(HAL_GetTick() - last_time > 1000){
+//		  printf("%d\r\n",count);
+//		  last_time = HAL_GetTick();
+//		  count = 0;
+//	  }
 //	  DISPLAY_identify_layout(&display);
   }
   /* USER CODE END 3 */

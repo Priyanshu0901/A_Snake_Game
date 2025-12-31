@@ -11,7 +11,7 @@
 #include "WS2812B.h"
 #include "pixel.h"
 
-#define DISPLAY_ROWS 16
+#define DISPLAY_ROWS 8
 #define DISPLAY_COLS 8
 
 typedef struct{

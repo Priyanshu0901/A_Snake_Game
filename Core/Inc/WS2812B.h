@@ -26,8 +26,19 @@ typedef struct{
 	WS2812B_driver_state state;
 }WS2812B_t;
 
+/*
+ * Constructor for WS2812B led
+ */
 void WS2812B_ctor(WS2812B_t * const me, GPIO_TypeDef *port, uint16_t pin);
+
+/*
+ * writes the whole buffer
+ */
 void WS2812B_write(WS2812B_t *const me, PIXEL_t *pixels, uint16_t count);
+
+/*
+ * Resets the led screen
+ */
 void WS2812B_reset(WS2812B_t * const me);
 
 #endif /* INC_WS2812B_H_ */

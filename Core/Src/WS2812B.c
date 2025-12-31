@@ -16,12 +16,13 @@
 
 #define RES_10NS 50000 // Low Voltage Above 50μs // 50000 but it has to return and get the new buffer so
 
-#define ITTERATION_FACTOR 5
+#define ITTERATION_FACTOR 3
 
 void WS2812B_ctor(WS2812B_t *const me, GPIO_TypeDef *port, uint16_t pin) {
 	me->port = port;
 	me->pin = pin;
 	me->state = OK;
+	WS2812B_reset(me);
 }
 
 // Force the compiler to place the code directly inside the loop to save time
@@ -43,7 +44,7 @@ static inline void write_bit(WS2812B_t *const me, uint32_t high_cycles,
 void WS2812B_reset(WS2812B_t *const me) {
 	me->state = RESET_WAIT;
 	me->port->BSRR = (uint32_t) me->pin << 16;
-	delay_cycles(RES_10NS);
+	delay_cycles(RES_10NS / ITTERATION_FACTOR);
 	me->state = OK;
 }
 
