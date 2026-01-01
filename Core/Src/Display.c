@@ -73,7 +73,7 @@ void test_breathing_rainbow_update(DISPLAY_t * const me)
     hue_offset += 2; // Speed of rainbow movement
 }
 
-void DISPLAY_identify_layout(DISPLAY_t * const me) {
+void identify_layout(DISPLAY_t * const me) {
     for (uint16_t i = 0; i < (DISPLAY_ROWS * DISPLAY_COLS); i++) {
         // Clear buffer
         memset(me->display_buffer, 0, sizeof(me->display_buffer));
@@ -92,8 +92,8 @@ void DISPLAY_identify_layout(DISPLAY_t * const me) {
 
 void DISPLAY_test(DISPLAY_t * const me)
 {
+//	identify_layout(me);
     test_breathing_rainbow_update(me);
-    DISPLAY_update(me);
 }
 
 

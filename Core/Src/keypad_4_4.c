@@ -10,6 +10,8 @@
 
 void KEYPAD_ctor(KEYPAD_t *const me, I2C_HandleTypeDef *i2cHandle) {
 	PCF8574_ctor(&(me->driver), i2cHandle);
+	me->key = NO_KEY;
+	me->new_key_press = false;
 }
 
 static inline uint8_t col_to_int(uint8_t mask) {
@@ -27,7 +29,7 @@ static inline uint8_t col_to_int(uint8_t mask) {
 	}
 }
 
-void KEYPAD_read(KEYPAD_t *const me) {
+void KEYPAD_poll(KEYPAD_t *const me) {
 	static uint8_t row_masks[] = { 0xFE, 0xFD, 0xFB, 0xF7 };
 
 	for (int i = 0; i < 4; i++) {
@@ -44,12 +46,12 @@ void KEYPAD_read(KEYPAD_t *const me) {
 			uint8_t col_idx = col_to_int(col_mask);
 
 			if (col_idx != 0xFF) {
-				// Calculate linear index 0...15
-				uint8_t linear_index = (((3 - i) *4) + col_idx);
-
-				log_message("KEYBOARD", LOG_INFO, "Key Index: %d",
-						linear_index);
+				keys_e new_key = (keys_e) ((3 - i) + (col_idx * 4));
+				me->key = new_key;
+				me->new_key_press = true;
+				return;
 			}
 		}
 	}
+	me->key = NO_KEY;
 }

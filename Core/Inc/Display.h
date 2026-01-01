@@ -22,11 +22,11 @@ typedef struct{
 }DISPLAY_t;
 
 void DISPLAY_ctor(DISPLAY_t * const me, GPIO_TypeDef *port, uint16_t pin);
+
 void DISPLAY_update(DISPLAY_t * const me);
 /*
  * Test Functions
  */
-void DISPLAY_identify_layout(DISPLAY_t * const me);
-void DISPLAY_test(DISPLAY_t * const me); // called from main()
+void DISPLAY_test(DISPLAY_t * const me);
 
 #endif /* INC_DISPLAY_H_ */

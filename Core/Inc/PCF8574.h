@@ -8,8 +8,7 @@
 #ifndef INC_PCF8574_H_
 #define INC_PCF8574_H_
 
-#include "stm32f4xx_hal.h"
-#include <stdint.h>
+#include "main.h"
 
 /*
  * DEFINES
