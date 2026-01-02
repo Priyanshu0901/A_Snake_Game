@@ -21,8 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Display.h"
-#include "keypad_4_4.h"
+#include "Game.h"
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,6 +99,18 @@ int main(void) {
 	DISPLAY_ctor(&my_display, WS2812B_D_GPIO_Port, WS2812B_D_Pin);
 	KEYPAD_t my_keypad;
 	KEYPAD_ctor(&my_keypad, &hi2c1);
+
+	CANVAS_t my_canvas;
+	CANVAS_ctor(&my_canvas, &my_display);
+	INPUT_t my_input;
+	INPUT_ctor(&my_input, &my_keypad);
+
+	GAME_Engine_t my_game_engine;
+	GAME_ctor(&my_game_engine, &my_canvas, &my_input);
+
+
+	srand(HAL_GetTick());
+
 	uint32_t last_tick = 0;
 
 	/* USER CODE END 2 */
@@ -111,19 +123,17 @@ int main(void) {
 		/* USER CODE BEGIN 3 */
 		uint32_t now = HAL_GetTick();
 
-		if (now - last_tick >= (1000 / 100)) { // 100 FPS
+		if (now - last_tick >= (1000 / 30)) { // 30 FPS
 			last_tick = now;
 
 			// 1. Get Input
 			KEYPAD_poll(&my_keypad);
 
 			// 2. Run Game Logic (e.g. move player based on my_keypad.key)
-//	          GAME_update(&my_game, &my_keypad);
+//	          GAME_update(&my_game);
 
 			// 3. Draw Game to Buffer
-//	          GAME_render(&my_game, &my_display);
-
-			DISPLAY_test(&my_display);
+			GAME_render(&my_game_engine);
 
 			// 4. Push to Hardware
 			DISPLAY_update(&my_display);
