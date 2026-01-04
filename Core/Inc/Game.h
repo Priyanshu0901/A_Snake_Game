@@ -36,7 +36,7 @@ typedef struct {
 
 void GAME_ctor(GAME_Engine_t * const me, CANVAS_t * canvas, INPUT_t * input);
 
-void GAME_update(GAME_Engine_t * const me);
+void GAME_update(GAME_Engine_t *const me, key_action_e const new_action);
 void GAME_tick(GAME_Engine_t * const me);
 void GAME_render(GAME_Engine_t * const me);
 

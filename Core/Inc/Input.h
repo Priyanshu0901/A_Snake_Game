@@ -11,7 +11,7 @@
 #include "Keypad.h"
 
 typedef enum {
-    ACTION_UP,
+    ACTION_UP = 0,
     ACTION_DOWN,
     ACTION_LEFT,
     ACTION_RIGHT,

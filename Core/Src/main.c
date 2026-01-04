@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Game.h"
+#include "AI.h"
 #include <stdlib.h>
 /* USER CODE END Includes */
 
@@ -108,6 +109,9 @@ int main(void) {
 	GAME_Engine_t my_game_engine;
 	GAME_ctor(&my_game_engine, &my_canvas, &my_input);
 
+	AI_t my_ai_player;
+	AI_ctor(&my_ai_player,&my_game_engine);
+
 	srand(HAL_GetTick());
 
 	uint32_t last_tick = 0;
@@ -125,16 +129,20 @@ int main(void) {
 
 		if (now - last_tick >= (1000 / REFRESH_RATE)) { // 60 FPS
 			last_tick = now;
-
+#ifndef AI
 			if (++counter_input > REFRESH_RATE / INPUT_RATE) {
 				// 1. Get Input
 				counter_input = 0;
 				KEYPAD_poll(&my_keypad);
-				GAME_update(&my_game_engine);
+				GAME_update(&my_game_engine,INPUT_get_action(&my_input));
 			}
+#endif
 
 			if (++counter_tick > REFRESH_RATE / TICK_RATE) {
 				counter_tick = 0;
+#ifdef AI
+				GAME_update(&my_game_engine, AI_get_action(&my_ai_player));
+#endif
 				GAME_tick(&my_game_engine);
 			}
 
@@ -147,6 +155,12 @@ int main(void) {
 			// 4. Push to Hardware
 			CANVAS_sync(&my_canvas);
 			DISPLAY_update(&my_display);
+
+			if (my_game_engine.game_over) {
+#ifdef AI
+				AI_reset(&my_ai_player);
+#endif
+			}
 		}
 	}
 	/* USER CODE END 3 */

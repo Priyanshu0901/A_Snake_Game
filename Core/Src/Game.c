@@ -48,25 +48,44 @@ void generate_food_color_lut() {
 }
 
 void generate_snake_rainbow_lut() {
-    for (int i = 0; i < SNAKE_LUT_SIZE; i++) {
-        float hue = (float)i / SNAKE_LUT_SIZE;
-        float r, g, b;
+	for (int i = 0; i < SNAKE_LUT_SIZE; i++) {
+		float hue = (float) i / SNAKE_LUT_SIZE;
+		float r, g, b;
 
-        // Standard Hue-to-RGB conversion
-        float h = hue * 6.0f;
-        float x = (1.0f - fabsf(fmodf(h, 2.0f) - 1.0f));
+		// Standard Hue-to-RGB conversion
+		float h = hue * 6.0f;
+		float x = (1.0f - fabsf(fmodf(h, 2.0f) - 1.0f));
 
-        if (h < 1)      { r=1; g=x; b=0; }
-        else if (h < 2) { r=x; g=1; b=0; }
-        else if (h < 3) { r=0; g=1; b=x; }
-        else if (h < 4) { r=0; g=x; b=1; }
-        else if (h < 5) { r=x; g=0; b=1; }
-        else            { r=1; g=0; b=x; }
+		if (h < 1) {
+			r = 1;
+			g = x;
+			b = 0;
+		} else if (h < 2) {
+			r = x;
+			g = 1;
+			b = 0;
+		} else if (h < 3) {
+			r = 0;
+			g = 1;
+			b = x;
+		} else if (h < 4) {
+			r = 0;
+			g = x;
+			b = 1;
+		} else if (h < 5) {
+			r = x;
+			g = 0;
+			b = 1;
+		} else {
+			r = 1;
+			g = 0;
+			b = x;
+		}
 
-        snake_color_lut[i].pixels.red   = (uint8_t)(r * 255);
-        snake_color_lut[i].pixels.green = (uint8_t)(g * 255);
-        snake_color_lut[i].pixels.blue  = (uint8_t)(b * 255);
-    }
+		snake_color_lut[i].pixels.red = (uint8_t) (r * 255);
+		snake_color_lut[i].pixels.green = (uint8_t) (g * 255);
+		snake_color_lut[i].pixels.blue = (uint8_t) (b * 255);
+	}
 }
 
 void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas, INPUT_t *input) {
@@ -154,9 +173,13 @@ void check_collisions(GAME_Engine_t *const me) {
 	}
 }
 
-void GAME_update(GAME_Engine_t *const me) {
-	key_action_e new_action = INPUT_get_action(me->input);
+void GAME_update(GAME_Engine_t *const me, key_action_e const new_action) {
 
+#ifndef AI
+	if(me->game_over && new_action != ACTION_NONE){
+		me->game_over = false;
+	}
+#endif
 	// Filter input to prevent 180-degree turns
 	if (new_action == ACTION_UP && me->current_dir != ACTION_DOWN)
 		me->current_dir = ACTION_UP;
@@ -191,10 +214,10 @@ void GAME_render(GAME_Engine_t *const me) {
 
 void GAME_reset(GAME_Engine_t *const me) {
 	memset(me->body, 0, MAX_SNAKE_LEN * sizeof(C_COORDINATES_t));
-
+	me->game_over = true;
 	// Start in the center
-	me->body[0].x = 3;
-	me->body[0].y = 3;
+	me->body[0].x = rand() % 8;
+	me->body[0].y = rand() % 8;
 	me->length = 1;
 
 	me->current_dir = ACTION_NONE; // Wait for player input to start

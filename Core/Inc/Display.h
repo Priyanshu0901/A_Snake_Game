@@ -32,6 +32,6 @@ void DISPLAY_update(DISPLAY_t * const me);
 /*
  * Test Functions
  */
-void DISPLAY_test(DISPLAY_t * const me);
+//void DISPLAY_test(DISPLAY_t * const me);
 
 #endif /* INC_DISPLAY_H_ */
