@@ -14,7 +14,7 @@
 #define DISPLAY_ROWS 8
 #define DISPLAY_COLS 8
 
-#define DEFAULT_BRIGHTNESS 1U << 5
+#define DEFAULT_BRIGHTNESS 1U << 4
 
 typedef struct{
 	PIXEL_t * display_buffer;

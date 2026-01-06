@@ -112,12 +112,14 @@ int main(void) {
 #ifdef AI
 	AI_t my_ai_player;
 	AI_ctor(&my_ai_player,&my_game_engine);
+#elif
+	uint8_t counter_input = 0;
 #endif
 
 	srand(HAL_GetTick());
 
 	uint32_t last_tick = 0;
-	uint8_t counter_input = 0, counter_render = 0, counter_tick = 0;
+	uint8_t counter_render = 0, counter_tick = 0;
 
 	/* USER CODE END 2 */
 

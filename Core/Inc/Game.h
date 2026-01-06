@@ -14,7 +14,7 @@
 #define REFRESH_RATE 120
 #define INPUT_RATE 30
 #define RENDER_RATE 60
-#define TICK_RATE 15
+#define TICK_RATE 10
 
 #define MAX_SNAKE_LEN (DISPLAY_COLS * DISPLAY_ROWS)
 

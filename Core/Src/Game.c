@@ -10,6 +10,8 @@
 #include <string.h>
 #include <math.h>
 
+static int game_counter = -1, game_won_counter = 0;
+
 #define FOOD_LUT_SIZE 20
 static PIXEL_t food_color_lut[FOOD_LUT_SIZE];
 
@@ -128,7 +130,11 @@ void move_snake(GAME_Engine_t *me) {
 }
 
 void spawn_food(GAME_Engine_t *const me) {
-	if(MAX_SNAKE_LEN <= me->length) GAME_reset(me);
+	if(MAX_SNAKE_LEN <= me->length) {
+		++game_won_counter;
+		GAME_reset(me);
+		return;
+	}
 
 	bool on_snake;
 	me->food_color = 0;
@@ -219,7 +225,11 @@ void GAME_reset(GAME_Engine_t *const me) {
 	me->body[0].y = rand() % 8;
 	me->length = 1;
 
+	game_counter++;
+
 	me->current_dir = ACTION_NONE; // Wait for player input to start
+
+	log_message("GAME", LOG_INFO, "%d/%d",game_won_counter,game_counter);
 
 	spawn_food(me);
 }
