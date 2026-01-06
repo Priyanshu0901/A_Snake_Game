@@ -6,22 +6,6 @@ A classic Snake game implementation running on an STM32F411RE microcontroller, f
 ![Display](https://img.shields.io/badge/Display-WS2812B-green)
 ![IDE](https://img.shields.io/badge/IDE-STM32CubeIDE-orange)
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Hardware Requirements](#hardware-requirements)
-- [Software Requirements](#software-requirements)
-- [Hardware Setup](#hardware-setup)
-- [Installation](#installation)
-- [Game Controls](#game-controls)
-- [How to Play](#how-to-play)
-- [Project Structure](#project-structure)
-- [Technical Details](#technical-details)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## 🎮 Overview
 
 This project brings the classic Snake game to life on embedded hardware using an STM32 microcontroller. The game displays on a colorful WS2812B 8x8 LED matrix, creating a vibrant "Rainbow Snake" experience. Players control the snake using a keyboard matrix, navigating to collect food and grow longer while avoiding collisions with walls and the snake's own body.
@@ -160,17 +144,6 @@ Use the keyboard matrix to control the snake:
 | Right Arrow   | Move Right |
 
 > **Note**: The exact key mapping depends on your keyboard matrix layout. Check the code to customize key assignments.
-
-## 🕹️ How to Play
-
-1. **Start the Game**: Power on the Nucleo board. The snake will appear on the LED matrix.
-2. **Control the Snake**: Use the keyboard matrix to change the snake's direction.
-3. **Collect Food**: Navigate the snake to the food (displayed as a different color LED).
-4. **Grow**: Each time the snake eats food, it grows by one segment.
-5. **Avoid Collisions**: Don't hit the walls or the snake's own body!
-6. **Score**: The longer your snake, the higher your score.
-
-
 
 ## 🔧 Technical Details
 
