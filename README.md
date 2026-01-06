@@ -34,7 +34,7 @@ https://github.com/Priyanshu0901/A_Snake_Game/assets -->
 
 ### AI Autoplay Mode
 
-![](https://github.com/Priyanshu0901/A_Snake_Game/tree/main/assets/Snake_Autoplay.gif)
+![](https://github.com/Priyanshu0901/A_Snake_Game/blob/main/assets/Snake_Autoplay.gif)
 
 ## ✨ Features
 
