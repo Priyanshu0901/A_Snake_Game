@@ -10,7 +10,7 @@ A classic Snake game implementation running on an STM32F411RE microcontroller, f
 
 This project brings the classic Snake game to life on embedded hardware using an STM32 microcontroller. The game displays on a colorful WS2812B 8x8 LED matrix, creating a vibrant "Rainbow Snake" experience. Players control the snake using a keyboard matrix, navigating to collect food and grow longer while avoiding collisions with walls and the snake's own body.
 
-## 🎥 Demo Video (AI Autoplay Mode)
+## Demo Video (AI Autoplay Mode)
 
 ![](https://github.com/Priyanshu0901/A_Snake_Game/blob/main/assets/Snake_Autoplay.gif)
 
