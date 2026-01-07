@@ -1,6 +1,6 @@
-# Rainbow Snake Game
+# AI Snake
 
-A classic Snake game implementation running on an STM32F411RE microcontroller, featuring a vibrant WS2812B RGB LED matrix display (8x8) and keyboard matrix input controls.
+A classic Snake game implementation running on an STM32F411RE microcontroller with AI
 
 ![STM32](https://img.shields.io/badge/STM32-F411RE-blue)
 ![Display](https://img.shields.io/badge/Display-WS2812B-green)
@@ -8,7 +8,7 @@ A classic Snake game implementation running on an STM32F411RE microcontroller, f
 
 ## Overview
 
-This project brings the classic Snake game to life on embedded hardware using an STM32 microcontroller. The game displays on a colorful WS2812B 8x8 LED matrix, creating a vibrant "Rainbow Snake" experience. Players control the snake using a keyboard matrix, navigating to collect food and grow longer while avoiding collisions with walls and the snake's own body.
+This project brings the classic Snake game to life on embedded hardware using an STM32 microcontroller. The game displays on a colorful WS2812B 8x8 LED matrix, creating a vibrant "Rainbow Snake" experience. Players can control the snake using a keyboard matrix, navigating to collect food and grow longer while avoiding collisions with walls and the snake's own body or Let the AI play it for you. 
 
 ## Demo Video (AI Autoplay Mode)
 
@@ -22,7 +22,7 @@ This project brings the classic Snake game to life on embedded hardware using an
 - **Responsive Controls**: 8x8 keyboard matrix input for directional control
 - **Embedded System**: Runs on STM32F411RE Nucleo board
 - **Compact Design**: Fits within 64 LEDs (8x8 matrix)
-- **Optional I/O Expansion**: PCF8574 I/O expander support for additional features
+- **I/O Expansion**: PCF8574 I/O expander support for additional features
 
 ## Hardware Requirements
 
@@ -31,7 +31,7 @@ This project brings the classic Snake game to life on embedded hardware using an
 | **Microcontroller** | NUCLEO-F411RE (STM32F411RE) | 1 |
 | **LED Display** | WS2812B 8x8 LED Matrix | 1 |
 | **Input Device** | 8x8 Keyboard Matrix | 1 |
-| **I/O Expander** | PCF8574 Module (Optional) | 1 |
+| **I/O Expander** | PCF8574 Module | 1 |
 | **Power Supply** | 5V Power Supply (for LEDs) | 1 |
 | **Miscellaneous** | Jumper wires, Breadboard | As needed |
 
