@@ -681,12 +681,6 @@ Or adjust the master refresh rate:
 
 ---
 
-## License
-
-This project is open-source. Feel free to use, modify, and distribute.
-
----
-
 ## Acknowledgments
 
 Inspired by classic Snake implementations and modern AI techniques. Special thanks to the embedded systems and AI communities for their contributions to pathfinding and Hamiltonian cycle algorithms.
