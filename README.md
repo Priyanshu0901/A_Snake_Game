@@ -672,12 +672,11 @@ Or adjust the master refresh rate:
 - [Perturbed Hamiltonian Cycle Algorithm](https://johnflux.com/tag/snake/)
 
 **STM32 Development:**
-- [STM32F4 Reference Manual](https://www.st.com/resource/en/reference_manual/dm00031020.pdf)
+- [STM32F411 Reference Manual](https://www.st.com/resource/en/reference_manual/rm0383-stm32f411xce-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
 - [STM32CubeIDE User Guide](https://www.st.com/resource/en/user_manual/um2609-stm32cubeide-user-guide-stmicroelectronics.pdf)
 
 **WS2812B Protocol:**
 - [WS2812B Datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)
-- [STM32 WS2812B Driver Tutorial](https://controllerstech.com/how-to-use-ws2812b-rgb-led-with-stm32/)
 
 ---
 
