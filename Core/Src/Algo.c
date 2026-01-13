@@ -8,19 +8,23 @@
 #include "Algo.h"
 #include "stdlib.h"
 
+#define SUPER_CELL_SIZE  2
+
+#define SUPER_ROWS       (DISPLAY_ROWS / SUPER_CELL_SIZE)
+#define SUPER_COLS       (DISPLAY_COLS / SUPER_CELL_SIZE)
+
 typedef struct {
 	bool up, down, left, right;
 	bool visited;
 } MST_Node_t;
 
-static MST_Node_t supergrid[4][4];
+static MST_Node_t supergrid[SUPER_ROWS][SUPER_COLS];
 
 // Reset Grid
-void init_supergrid() {
-	for (int y = 0; y < 4; y++) {
-		for (int x = 0; x < 4; x++) {
-			supergrid[y][x] =
-					(MST_Node_t ) { false, false, false, false, false };
+void init_supergrid(void) {
+	for (int y = 0; y < SUPER_ROWS; y++) {
+		for (int x = 0; x < SUPER_COLS; x++) {
+			supergrid[y][x] = (MST_Node_t ) { 0 };
 		}
 	}
 }
@@ -60,7 +64,7 @@ void visit_node(int x, int y) {
 		}
 
 		// Check bounds and if the neighbor was already visited
-		if (nx >= 0 && nx < 4 && ny >= 0 && ny < 4
+		if (nx >= 0 && nx < SUPER_COLS && ny >= 0 && ny < SUPER_ROWS
 				&& !supergrid[ny][nx].visited) {
 			// Open the wall between current and neighbor
 			if (dirs[i] == 0) {
@@ -86,30 +90,30 @@ void visit_node(int x, int y) {
 void generate_mst_4x4() {
 	init_supergrid();
 	// Start generating from a random corner or (0,0)
-	visit_node(rand() % 4, rand() % 4);
+	visit_node(rand() % SUPER_COLS, rand() % SUPER_ROWS);
 }
 
 void expand_mst_to_hamiltonian(ALGO_t *const me) {
 	int x = 0, y = 0;
-	for (int i = 0; i < 64; i++) {
+	for (int i = 0; i < MAX_SNAKE_LEN; i++) {
 		me->ham_path[i].x = x;
 		me->ham_path[i].y = y;
 
-		int sx = x / 2; // Current super-cell X
-		int sy = y / 2; // Current super-cell Y
+		int sx = x / SUPER_CELL_SIZE; // Current super-cell X
+		int sy = y / SUPER_CELL_SIZE; // Current super-cell Y
 
 		// Determine next step based on which corner of the 2x2 we are in:
-		if (x % 2 == 0 && y % 2 == 0) { // Top-Left
+		if (x % SUPER_CELL_SIZE == 0 && y % SUPER_CELL_SIZE == 0) { // Top-Left
 			if (supergrid[sy][sx].up)
 				y--;    // Move to super-cell above
 			else
 				x++;                         // Move to Top-Right
-		} else if (x % 2 == 1 && y % 2 == 0) { // Top-Right
+		} else if (x % SUPER_CELL_SIZE == 1 && y % SUPER_CELL_SIZE == 0) { // Top-Right
 			if (supergrid[sy][sx].right)
 				x++; // Move to super-cell right
 			else
 				y++;                         // Move to Bottom-Right
-		} else if (x % 2 == 1 && y % 2 == 1) { // Bottom-Right
+		} else if (x % SUPER_CELL_SIZE == 1 && y % SUPER_CELL_SIZE == 1) { // Bottom-Right
 			if (supergrid[sy][sx].down)
 				y++;  // Move to super-cell below
 			else
@@ -159,7 +163,7 @@ key_action_e ALGO_get_action(ALGO_t *const me) {
 	int current_len = me->game_state->length;
 
 	// Only shortcut if snake is less than half the board size
-	if (current_len < (MAX_SNAKE_LEN / 2)) {
+	if (current_len < SHORTCUT_THRESHOLD) {
 		int best_dist_to_food = 1000; // Large number
 		key_action_e best_action = ACTION_NONE;
 
@@ -178,7 +182,7 @@ key_action_e ALGO_get_action(ALGO_t *const me) {
 				nx++;
 
 			// 2. Validate: Boundary Check
-			if (nx < 0 || nx >= 8 || ny < 0 || ny >= 8)
+			if (nx < 0 || nx >= DISPLAY_COLS || ny < 0 || ny >= DISPLAY_ROWS)
 				continue;
 
 			// 3. Validate: 180-degree turn check
@@ -226,7 +230,7 @@ key_action_e ALGO_get_action(ALGO_t *const me) {
 					break;
 
 				// Advance to the next index in the 64-step loop
-				walk_idx = (walk_idx + 1) % 64;
+				walk_idx = (walk_idx + 1) % MAX_SNAKE_LEN;
 			}
 
 			if (path_is_trapped)
@@ -236,7 +240,7 @@ key_action_e ALGO_get_action(ALGO_t *const me) {
 			int dist_to_food =
 					(food_idx >= neighbor_idx) ?
 							(food_idx - neighbor_idx) :
-							(64 - neighbor_idx + food_idx);
+							(MAX_SNAKE_LEN - neighbor_idx + food_idx);
 
 			if (dist_to_food < best_dist_to_food) {
 				best_dist_to_food = dist_to_food;
@@ -249,7 +253,7 @@ key_action_e ALGO_get_action(ALGO_t *const me) {
 	}
 
 	// FALLBACK: Follow the Hamiltonian Cycle strictly
-	C_COORDINATES_t next = me->ham_path[(head_idx + 1) % 64];
+	C_COORDINATES_t next = me->ham_path[(head_idx + 1) % MAX_SNAKE_LEN];
 	if (next.x > head.x)
 		return ACTION_RIGHT;
 	if (next.x < head.x)
