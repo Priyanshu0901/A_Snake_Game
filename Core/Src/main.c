@@ -112,7 +112,7 @@ int main(void) {
 #ifdef ALGO
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
-#elif
+#else
 	uint8_t counter_input = 0;
 #endif
 

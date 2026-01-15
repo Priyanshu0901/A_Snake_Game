@@ -140,8 +140,8 @@ void spawn_food(GAME_Engine_t *const me) {
 	me->food_color = 0;
 	do {
 		on_snake = false;
-		me->food.x = rand() % DISPLAY_ROWS;
-		me->food.y = rand() % DISPLAY_COLS;
+		me->food.x = rand() % DISPLAY_COLS;
+		me->food.y = rand() % DISPLAY_ROWS;
 
 		// Make sure food didn't spawn on the snake body
 		for (int i = 0; i < me->length; i++) {
@@ -221,8 +221,8 @@ void GAME_reset(GAME_Engine_t *const me) {
 	memset(me->body, 0, MAX_SNAKE_LEN * sizeof(C_COORDINATES_t));
 	me->game_over = true;
 	// Start in the center
-	me->body[0].x = rand() % 8;
-	me->body[0].y = rand() % 8;
+	me->body[0].x = rand() % DISPLAY_COLS;
+	me->body[0].y = rand() % DISPLAY_ROWS;
 	me->length = 1;
 
 	game_counter++;
