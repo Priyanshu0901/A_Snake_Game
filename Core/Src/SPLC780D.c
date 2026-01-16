@@ -4,26 +4,72 @@
  *  Created on: 16-Jan-2026
  *      Author: rayv_mini_pc
  */
-
+#include "SPLC780D_defs.h"
 #include "SPLC780D.h"
 
-#define SPLC780D_PCF8574_ADDRESS (PCF8574_DEFAULT_ADDRESS | 0x05)
-
-#define SPLC780D_CLEAR_CMD	0x01
-
-void SPLC780D_Toggle_Latch(SPLC780D_t * const me){
-	HAL_GPIO_TogglePin(me->E_Port, me->E_Pin);
+inline GPIO_PinState CMD_TO_STATE_SPLC780D_RS(uint32_t cmd) {
+	return (cmd & (1 << 9)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
-void SPLC780D_Write_CMD(SPLC780D_t * const me, uint16_t cmd){
-
+inline GPIO_PinState CMD_TO_STATE_SPLC780D_RW(uint32_t cmd) {
+	return (cmd & (1 << 8)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
-void SPLC780D_ctor(SPLC780D_t * const me, I2C_HandleTypeDef *i2chandle){
-
-	me->driver.address = SPLC780D_PCF8574_ADDRESS;
-	PCF8574_ctor(&(me->driver), i2cHandle);
-
-
+inline void SPLC780D_Toggle_Latch(SPLC780D_t *const me) {
+	HAL_GPIO_WritePin(me->E_Port, me->E_Pin, SET);
+	HAL_Delay(1);
+	HAL_GPIO_WritePin(me->E_Port, me->E_Pin, RESET);
 }
 
+void SPLC780D_Write_CMD(SPLC780D_t *const me, uint16_t cmd) {
+	me->data_pins.set_pins.pin_byte[0] = (uint8_t) cmd & SPLC780D_CMD_BITMASK;
+	PCF8574_write(&(me->data_pins));
+	HAL_GPIO_WritePin(me->RS_Port, me->RS_Pin, CMD_TO_STATE_SPLC780D_RS(cmd));
+	HAL_GPIO_WritePin(me->RW_Port, me->RW_Pin, CMD_TO_STATE_SPLC780D_RW(cmd));
+	SPLC780D_Toggle_Latch(me);
+}
+
+//Follow Page 10
+void SPLC780D_Reset(SPLC780D_t *const me) {
+
+	// 1. First Function Set (Forcing 8-bit mode)
+	SPLC780D_Write_CMD(me, SPLC780D_FUNCTION_SET);
+	HAL_Delay(5); // Wait more than 4.1ms
+
+	// 2. Second Function Set
+	SPLC780D_Write_CMD(me, SPLC780D_FUNCTION_SET);
+	HAL_Delay(1); // Wait more than 100us
+
+	// 3. Third Function Set
+	SPLC780D_Write_CMD(me, SPLC780D_FUNCTION_SET);
+
+	// 4. Final Function Set (Set rows/font)
+	// 0x38 = 8-bit mode, 2-line display, 5x8 font
+	SPLC780D_Write_CMD(me,SPLC780D_FUNCTION_SET );
+
+	// 5. Display ON/OFF Control
+	SPLC780D_Write_CMD(me, SPLC780D_DISPLAY_CONTROL);
+
+	SPLC780D_Write_CMD(me, SPLC780D_CLEAR_CMD);
+	HAL_Delay(2); // VERY IMPORTANT: Clear needs ~2ms
+
+	SPLC780D_Write_CMD(me,SPLC780D_ENTRY_MODE_SET);
+}
+
+void SPLC780D_ctor(SPLC780D_t *const me, I2C_HandleTypeDef *i2chandle) {
+
+	me->data_pins.address = SPLC780D_PCF8574_ADDRESS;
+	PCF8574_ctor(&(me->data_pins), i2chandle);
+
+	// Wait at least 40ms after VCC rises to 4.5V
+	HAL_Delay(50);
+
+	SPLC780D_Reset(me);
+}
+
+void SPLC780D_reset_cursor(SPLC780D_t * const me){
+	SPLC780D_Write_CMD(me, SPLC780D_RETURN_HOME);
+}
+void SPLC780D_move_cursor(SPLC780D_t * const me,SPLC780D_CURSOR_MOVEMENT_e movement){
+	SPLC780D_Write_CMD(me,SPLC780D_DISPLAY_CURSOR_SET | ((movement & 0x03)<<2));
+}

@@ -124,6 +124,20 @@ int main(void)
 	};
 	SPLC780D_ctor(&my_char_display, &hi2c1);
 
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+	SPLC780D_move_cursor(&my_char_display,CURSOR_RIGHT);
+
+	HAL_Delay(2000);
+	SPLC780D_reset_cursor(&my_char_display);
+
 #ifdef ALGO
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
