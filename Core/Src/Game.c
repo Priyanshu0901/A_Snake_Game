@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-static int game_counter = -1, game_won_counter = 0;
+static int game_counter = 0, game_won_counter = 0;
 
 #define FOOD_LUT_SIZE 20
 static PIXEL_t food_color_lut[FOOD_LUT_SIZE];
@@ -90,9 +90,11 @@ void generate_snake_rainbow_lut() {
 	}
 }
 
-void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas, INPUT_t *input) {
+void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas, INPUT_t *input,
+		APP_UI_t* ui) {
 	me->canvas = canvas;
 	me->input = input;
+	me->UI = ui;
 	generate_food_color_lut();
 	generate_snake_rainbow_lut();
 	GAME_reset(me);
@@ -130,8 +132,15 @@ void move_snake(GAME_Engine_t *me) {
 }
 
 void spawn_food(GAME_Engine_t *const me) {
-	if(MAX_SNAKE_LEN <= me->length) {
-		++game_won_counter;
+	if (MAX_SNAKE_LEN <= me->length) {
+		game_won_counter++;
+		char buffer[10];
+
+		// Update game number
+		snprintf(buffer, sizeof(buffer), "%u", game_won_counter);
+		APP_UI_update_value(me->UI, TOTAL_GAME_WINS, buffer);
+		// Refresh display
+		APP_UI_refresh(me->UI);
 		GAME_reset(me);
 		return;
 	}
@@ -176,6 +185,10 @@ void check_collisions(GAME_Engine_t *const me) {
 		if (me->length < MAX_SNAKE_LEN) {
 			me->body[me->length] = me->body[me->length - 1];
 			me->length++; // Grow the snake
+			char buffer[10];
+			snprintf(buffer, sizeof(buffer), "%u", me->length);
+			APP_UI_update_value(me->UI, SNAKE_LEN, buffer);
+			APP_UI_refresh(me->UI);
 		}
 		spawn_food(me); // Place new food
 	}
@@ -226,10 +239,17 @@ void GAME_reset(GAME_Engine_t *const me) {
 	me->length = 1;
 
 	game_counter++;
+	char buffer[10];
+
+	// Update game number
+	snprintf(buffer, sizeof(buffer), "%u", game_counter);
+	APP_UI_update_value(me->UI, CURRENT_GAME_NUM, buffer);
+	// Refresh display
+	APP_UI_refresh(me->UI);
 
 	me->current_dir = ACTION_NONE; // Wait for player input to start
 
-	log_message("GAME", LOG_INFO, "%d/%d",game_won_counter,game_counter);
+	log_message("GAME", LOG_INFO, "%d/%d", game_won_counter, game_counter);
 
 	spawn_food(me);
 }

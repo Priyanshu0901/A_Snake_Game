@@ -10,6 +10,7 @@
 
 #include "Input.h"
 #include "Canvas.h"
+#include "App_UI.h"
 
 #define REFRESH_RATE 60
 #define INPUT_RATE 30
@@ -25,6 +26,7 @@
 typedef struct {
 	CANVAS_t * canvas;
 	INPUT_t * input;
+	APP_UI_t * UI;
 
 	// --- Snake State ---
 	C_COORDINATES_t body[MAX_SNAKE_LEN];
@@ -38,7 +40,7 @@ typedef struct {
 
 }GAME_Engine_t;
 
-void GAME_ctor(GAME_Engine_t * const me, CANVAS_t * canvas, INPUT_t * input);
+void GAME_ctor(GAME_Engine_t * const me, CANVAS_t * canvas, INPUT_t * input, APP_UI_t * ui);
 
 void GAME_update(GAME_Engine_t *const me, key_action_e const new_action);
 void GAME_tick(GAME_Engine_t * const me);

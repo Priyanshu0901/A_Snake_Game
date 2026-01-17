@@ -24,7 +24,7 @@
 #include "Game.h"
 #include "Algo.h"
 #include <stdlib.h>
-#include "Char_Display.h"
+#include "App_UI.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,7 +62,6 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -107,9 +106,6 @@ int main(void) {
 	INPUT_t my_input;
 	INPUT_ctor(&my_input, &my_keypad);
 
-	GAME_Engine_t my_game_engine;
-	GAME_ctor(&my_game_engine, &my_canvas, &my_input);
-
 	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
 			.E_Pin = SPLC780D_E_Pin,
 
@@ -121,11 +117,16 @@ int main(void) {
 	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
 	CHAR_DISPLAY_t my_char_display;
 	CHAR_DISPLAY_ctor(&my_char_display, &my_char_display_driver);
+	CHAR_CANVAS_t my_char_canvas;
+	CHAR_CANVAS_ctor(&my_char_canvas, &my_char_display);
+	APP_UI_t app_ui;
+	APP_UI_ctor(&app_ui, &my_char_canvas);
+	APP_UI_setup_pages(&app_ui);
+	APP_UI_force_refresh(&app_ui);
 
-	CHAR_WRITE_data(&my_char_display, "HELLO FROM STM32", 0, 0);
-	CHAR_WRITE_data(&my_char_display,"written by Rayv",0,1);
-	CHAR_DISPLAY_buffer_flush(&my_char_display)
-;
+	GAME_Engine_t my_game_engine;
+	GAME_ctor(&my_game_engine, &my_canvas, &my_input,&app_ui);
+
 #ifdef ALGO
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
@@ -176,6 +177,11 @@ int main(void) {
 			// 4. Push to Hardware
 			CANVAS_sync(&my_canvas);
 			DISPLAY_update(&my_pixel_display);
+#if CHAR_DISPLAY_USE_DIRTY_TRACKING
+			CHAR_DISPLAY_force_refresh(&my_char_display);
+#else
+			APP_UI_force_refresh(&app_ui);
+#endif
 
 			if (my_game_engine.game_over) {
 #ifdef ALGO
@@ -315,7 +321,7 @@ static void MX_GPIO_Init(void) {
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOB,
-			WS2812B_D_Pin | SPLC780D_RS_Pin | SPLC780D_RW_Pin | SPLC780D_E_Pin,
+	WS2812B_D_Pin | SPLC780D_RS_Pin | SPLC780D_RW_Pin | SPLC780D_E_Pin,
 			GPIO_PIN_RESET);
 
 	/*Configure GPIO pin : B1_Pin */

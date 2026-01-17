@@ -7,6 +7,16 @@
 #include "SPLC780D_defs.h"
 #include "SPLC780D.h"
 
+#define DELAY_COUNT 150
+#define ITTERATION_FACTOR 3 //-Ofast
+
+// Force the compiler to place the code directly inside the loop to save time
+inline void delay_cycles(uint32_t cycles) {
+	while (cycles--) {
+		__NOP(); // One No-Operation instruction
+	}
+}
+
 inline GPIO_PinState CMD_TO_STATE_SPLC780D_RS(uint32_t cmd) {
 	return (cmd & (1 << 9)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
@@ -16,9 +26,9 @@ inline GPIO_PinState CMD_TO_STATE_SPLC780D_RW(uint32_t cmd) {
 }
 
 inline void SPLC780D_Toggle_Latch(SPLC780D_t *const me) {
-	HAL_GPIO_WritePin(me->E_Port, me->E_Pin, SET);
-	HAL_Delay(1);
-	HAL_GPIO_WritePin(me->E_Port, me->E_Pin, RESET);
+	me->E_Port->BSRR = me->E_Pin;
+	delay_cycles(DELAY_COUNT/ITTERATION_FACTOR);
+	me->E_Port->BSRR = (uint32_t) me->E_Pin << 16;
 }
 
 void SPLC780D_Write_CMD(SPLC780D_t *const me, uint16_t cmd) {
