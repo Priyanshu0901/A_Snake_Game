@@ -67,6 +67,12 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOA
 #define WS2812B_D_Pin GPIO_PIN_0
 #define WS2812B_D_GPIO_Port GPIOB
+#define SPLC780D_RS_Pin GPIO_PIN_13
+#define SPLC780D_RS_GPIO_Port GPIOB
+#define SPLC780D_RW_Pin GPIO_PIN_14
+#define SPLC780D_RW_GPIO_Port GPIOB
+#define SPLC780D_E_Pin GPIO_PIN_15
+#define SPLC780D_E_GPIO_Port GPIOB
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

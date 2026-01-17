@@ -13,7 +13,9 @@ HAL_StatusTypeDef PCF8574_ctor(PCF8574_t *const me,
 		I2C_HandleTypeDef *i2cHandle) {
 
 	me->i2cHandle = i2cHandle;
-	me->address = PCF8574_DEFAULT_ADDRESS;
+
+	if(me->address == 0)
+		me->address = PCF8574_DEFAULT_ADDRESS;
 
 	me->set_pins.pin_byte[0] = 0x00;
 

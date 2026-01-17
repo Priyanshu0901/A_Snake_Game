@@ -8,7 +8,10 @@
 #include "Keypad.h"
 #include "debug_logger.h"
 
+#define KEYPAD_PCF8574_ADDRESS (PCF8574_DEFAULT_ADDRESS | 0x02)
+
 void KEYPAD_ctor(KEYPAD_t *const me, I2C_HandleTypeDef *i2cHandle) {
+	me->driver.address = KEYPAD_PCF8574_ADDRESS;
 	PCF8574_ctor(&(me->driver), i2cHandle);
 	me->key = NO_KEY;
 	me->new_key_press = false;

@@ -24,6 +24,7 @@
 #include "Game.h"
 #include "Algo.h"
 #include <stdlib.h>
+#include "Char_Display.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,19 +97,35 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
-	DISPLAY_t my_display;
-	DISPLAY_ctor(&my_display, WS2812B_D_GPIO_Port, WS2812B_D_Pin);
+	DISPLAY_t my_pixel_display;
+	DISPLAY_ctor(&my_pixel_display, WS2812B_D_GPIO_Port, WS2812B_D_Pin);
 	KEYPAD_t my_keypad;
 	KEYPAD_ctor(&my_keypad, &hi2c1);
 
 	CANVAS_t my_canvas;
-	CANVAS_ctor(&my_canvas, &my_display);
+	CANVAS_ctor(&my_canvas, &my_pixel_display);
 	INPUT_t my_input;
 	INPUT_ctor(&my_input, &my_keypad);
 
 	GAME_Engine_t my_game_engine;
 	GAME_ctor(&my_game_engine, &my_canvas, &my_input);
 
+	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
+			.E_Pin = SPLC780D_E_Pin,
+
+			.RW_Port = SPLC780D_RW_GPIO_Port, .RW_Pin = SPLC780D_RW_Pin,
+
+			.RS_Port = SPLC780D_RS_GPIO_Port, .RS_Pin = SPLC780D_RS_Pin,
+
+	};
+	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
+	CHAR_DISPLAY_t my_char_display;
+	CHAR_DISPLAY_ctor(&my_char_display, &my_char_display_driver);
+
+	CHAR_WRITE_data(&my_char_display, "HELLO FROM STM32", 0, 0);
+	CHAR_WRITE_data(&my_char_display,"written by Rayv",0,1);
+	CHAR_DISPLAY_buffer_flush(&my_char_display)
+;
 #ifdef ALGO
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
@@ -158,7 +175,7 @@ int main(void) {
 
 			// 4. Push to Hardware
 			CANVAS_sync(&my_canvas);
-			DISPLAY_update(&my_display);
+			DISPLAY_update(&my_pixel_display);
 
 			if (my_game_engine.game_over) {
 #ifdef ALGO
@@ -297,7 +314,9 @@ static void MX_GPIO_Init(void) {
 	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(WS2812B_D_GPIO_Port, WS2812B_D_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB,
+			WS2812B_D_Pin | SPLC780D_RS_Pin | SPLC780D_RW_Pin | SPLC780D_E_Pin,
+			GPIO_PIN_RESET);
 
 	/*Configure GPIO pin : B1_Pin */
 	GPIO_InitStruct.Pin = B1_Pin;
@@ -312,12 +331,19 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : WS2812B_D_Pin */
-	GPIO_InitStruct.Pin = WS2812B_D_Pin;
+	/*Configure GPIO pins : WS2812B_D_Pin SPLC780D_E_Pin */
+	GPIO_InitStruct.Pin = WS2812B_D_Pin | SPLC780D_E_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(WS2812B_D_GPIO_Port, &GPIO_InitStruct);
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/*Configure GPIO pins : SPLC780D_RS_Pin SPLC780D_RW_Pin */
+	GPIO_InitStruct.Pin = SPLC780D_RS_Pin | SPLC780D_RW_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 	/* USER CODE BEGIN MX_GPIO_Init_2 */
 
