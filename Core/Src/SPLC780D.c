@@ -29,6 +29,13 @@ void SPLC780D_Write_CMD(SPLC780D_t *const me, uint16_t cmd) {
 	SPLC780D_Toggle_Latch(me);
 }
 
+void SPLC780D_Clear(SPLC780D_t *const me){
+	SPLC780D_Write_CMD(me, SPLC780D_CLEAR_CMD);
+	HAL_Delay(2); // VERY IMPORTANT: Clear needs ~2ms
+	me->cursor_x = 0;
+	me->cursor_y = 0;
+}
+
 //Follow Page 10
 void SPLC780D_Reset(SPLC780D_t *const me) {
 
@@ -45,15 +52,12 @@ void SPLC780D_Reset(SPLC780D_t *const me) {
 
 	// 4. Final Function Set (Set rows/font)
 	// 0x38 = 8-bit mode, 2-line display, 5x8 font
-	SPLC780D_Write_CMD(me,SPLC780D_FUNCTION_SET );
+	SPLC780D_Write_CMD(me, SPLC780D_FUNCTION_SET);
 
 	// 5. Display ON/OFF Control
 	SPLC780D_Write_CMD(me, SPLC780D_DISPLAY_CONTROL);
 
-	SPLC780D_Write_CMD(me, SPLC780D_CLEAR_CMD);
-	HAL_Delay(2); // VERY IMPORTANT: Clear needs ~2ms
-
-	SPLC780D_Write_CMD(me,SPLC780D_ENTRY_MODE_SET);
+	SPLC780D_Write_CMD(me, SPLC780D_ENTRY_MODE_SET);
 }
 
 void SPLC780D_ctor(SPLC780D_t *const me, I2C_HandleTypeDef *i2chandle) {
@@ -67,9 +71,29 @@ void SPLC780D_ctor(SPLC780D_t *const me, I2C_HandleTypeDef *i2chandle) {
 	SPLC780D_Reset(me);
 }
 
-void SPLC780D_reset_cursor(SPLC780D_t * const me){
+void SPLC780D_reset_cursor(SPLC780D_t *const me) {
 	SPLC780D_Write_CMD(me, SPLC780D_RETURN_HOME);
 }
-void SPLC780D_move_cursor(SPLC780D_t * const me,SPLC780D_CURSOR_MOVEMENT_e movement){
-	SPLC780D_Write_CMD(me,SPLC780D_DISPLAY_CURSOR_SET | ((movement & 0x03)<<2));
+
+void SPLC780D_move_display_cursor(SPLC780D_t *const me,
+		SPLC780D_CURSOR_MOVEMENT_e movement) {
+	SPLC780D_Write_CMD(me,
+			SPLC780D_DISPLAY_CURSOR_SET | ((movement & 0x03) << 2));
+}
+
+void SPLC780D_move_cursor(SPLC780D_t *const me, uint8_t x, uint8_t y) {
+	if (x >= CHAR_DISP_COLS || y >= CHAR_DISP_ROWS) {
+		log_message("SPLC780D", LOG_ERROR,
+				"SPLC780D_move_cursor Out of Bounds");
+	}
+	uint8_t addr =
+			(y == 0) ? (SPLC780D_LINE_1_BASE + x) : (SPLC780D_LINE_2_BASE + x);
+	SPLC780D_Write_CMD(me, SPLC780D_DDRAM_SET | (addr & SPLC780D_DDRAM_ADDR_MSK));
+
+	me->cursor_x = x;
+	me->cursor_y = y;
+}
+
+void SPLC780D_write_char(SPLC780D_t * const me, const char data){
+	SPLC780D_Write_CMD(me,SPLC780D_WRITE_DATA_TO_RAM | data);
 }
