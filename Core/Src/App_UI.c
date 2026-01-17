@@ -12,7 +12,7 @@
 // Template for main page (40x2 = 80 characters)
 static const char MAIN_PAGE_TEMPLATE[CHAR_DISP_COLS * CHAR_DISP_ROWS] =
     "Game:     Wins:     Snake Len:          "
-    "                                        ";
+    "FPS:                                    ";
 
 // Template for settings page (40x2 = 80 characters)
 static const char SETTINGS_PAGE_TEMPLATE[CHAR_DISP_COLS * CHAR_DISP_ROWS] =
@@ -39,6 +39,9 @@ void APP_UI_setup_pages(APP_UI_t * const me) {
 
     // "Snake Len: XXX" - 3 digits starting at position 35, row 0
     CHAR_CANVAS_obj_init(me->canvas, MAIN_PAGE, SNAKE_LEN, 35, 0, 3);
+
+    // "Snake Len: XXX" - 3 digits starting at position 35, row 0
+    CHAR_CANVAS_obj_init(me->canvas, MAIN_PAGE, GAME_FPS, 6, 1, 3);
 
     // Setup SETTINGS_PAGE
     me->canvas->pages[SETTINGS_PAGE].static_template = SETTINGS_PAGE_TEMPLATE;

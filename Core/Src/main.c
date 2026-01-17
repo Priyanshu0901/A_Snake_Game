@@ -24,7 +24,7 @@
 #include "Game.h"
 #include "Algo.h"
 #include <stdlib.h>
-#include "App_UI.h"
+#include "FPS_counter_util.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -125,7 +125,11 @@ int main(void) {
 	APP_UI_force_refresh(&app_ui);
 
 	GAME_Engine_t my_game_engine;
-	GAME_ctor(&my_game_engine, &my_canvas, &my_input,&app_ui);
+	GAME_ctor(&my_game_engine, &my_canvas, &my_input, &app_ui);
+
+	FPS_Counter_t fps_counter;
+	FPS_ctor(&fps_counter, 1000);
+	static char fps_string[16];
 
 #ifdef ALGO
 	ALGO_t my_algo_player;
@@ -152,7 +156,7 @@ int main(void) {
 		if (now - last_tick >= (1000 / REFRESH_RATE)) { // 60 FPS
 			last_tick = now;
 #ifndef ALGO
-			if (++counter_input > REFRESH_RATE / INPUT_RATE) {
+			if (++counter_input >= REFRESH_RATE / INPUT_RATE) {
 				// 1. Get Input
 				counter_input = 0;
 				KEYPAD_poll(&my_keypad);
@@ -160,7 +164,7 @@ int main(void) {
 			}
 #endif
 
-			if (++counter_tick > REFRESH_RATE / TICK_RATE) {
+			if (++counter_tick >= REFRESH_RATE / TICK_RATE) {
 				counter_tick = 0;
 #ifdef ALGO
 				GAME_update(&my_game_engine, ALGO_get_action(&my_algo_player));
@@ -168,20 +172,37 @@ int main(void) {
 				GAME_tick(&my_game_engine);
 			}
 
-			if (++counter_render > REFRESH_RATE / RENDER_RATE) {
+			if (++counter_render >= REFRESH_RATE / RENDER_RATE) {
 				counter_render = 0;
 				// 3. Draw Game to Buffer
 				GAME_render(&my_game_engine);
+
+				// Push to Hardware
+				CANVAS_sync(&my_canvas);
+
+				// *** Track FPS ONLY when DISPLAY_update is called ***
+				uint32_t display_fps = FPS_tick(&fps_counter, now);
+
+				DISPLAY_update(&my_pixel_display);
+
+				// Display FPS on character LCD
+				static uint32_t last_fps = 0;
+				if (display_fps != last_fps) {
+					snprintf(fps_string, sizeof(fps_string), "%lu",
+							display_fps);
+					APP_UI_update_value(&app_ui, GAME_FPS, fps_string);
+
+					last_fps = display_fps;
+#if CHAR_DISPLAY_USE_DIRTY_TRACKING
+					CHAR_DISPLAY_force_refresh(&my_char_display);
+#else
+				        			APP_UI_force_refresh(&app_ui);
+				        #endif
+
+				}
 			}
 
 			// 4. Push to Hardware
-			CANVAS_sync(&my_canvas);
-			DISPLAY_update(&my_pixel_display);
-#if CHAR_DISPLAY_USE_DIRTY_TRACKING
-			CHAR_DISPLAY_force_refresh(&my_char_display);
-#else
-			APP_UI_force_refresh(&app_ui);
-#endif
 
 			if (my_game_engine.game_over) {
 #ifdef ALGO
