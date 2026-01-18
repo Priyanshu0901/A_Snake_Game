@@ -24,7 +24,7 @@
 #define SPLC780D_DISPLAY_SET 		(1U << 2)
 
 //C = 1: Cursor on, C = 0: Cursor off
-#define SPLC780D_CURSOR_SET 		(1U << 1)  // NOTE: For test purposes
+#define SPLC780D_CURSOR_SET 		(0U << 1)
 
 //B = 1: Blinks on, B= 0: Blinks off
 #define SPLC780D_BLINK_SET			(0U << 0)

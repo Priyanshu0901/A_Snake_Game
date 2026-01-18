@@ -21,10 +21,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Game.h"
 #include "Algo.h"
 #include <stdlib.h>
-#include "Char_Display.h"
+#include "App_Controller.h"
+#include "FPS_counter_util.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,7 +62,6 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -97,46 +96,85 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
+	/* ========================================================================
+	 * HARDWARE DRIVER INITIALIZATION
+	 * ======================================================================== */
+
+	// Pixel Display (WS2812B LED Matrix)
 	DISPLAY_t my_pixel_display;
 	DISPLAY_ctor(&my_pixel_display, WS2812B_D_GPIO_Port, WS2812B_D_Pin);
+
+	// Keypad (4x4 matrix via PCF8574)
 	KEYPAD_t my_keypad;
 	KEYPAD_ctor(&my_keypad, &hi2c1);
 
+	// Character LCD Display (40x2 via SPLC780D)
+	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
+			.E_Pin = SPLC780D_E_Pin, .RW_Port = SPLC780D_RW_GPIO_Port, .RW_Pin =
+			SPLC780D_RW_Pin, .RS_Port = SPLC780D_RS_GPIO_Port, .RS_Pin =
+			SPLC780D_RS_Pin, };
+	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
+
+	/* ========================================================================
+	 * ABSTRACTION LAYER INITIALIZATION
+	 * ======================================================================== */
+
+	// Canvas for pixel display
 	CANVAS_t my_canvas;
 	CANVAS_ctor(&my_canvas, &my_pixel_display);
+
+	// Input handler
 	INPUT_t my_input;
 	INPUT_ctor(&my_input, &my_keypad);
 
-	GAME_Engine_t my_game_engine;
-	GAME_ctor(&my_game_engine, &my_canvas, &my_input);
-
-	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
-			.E_Pin = SPLC780D_E_Pin,
-
-			.RW_Port = SPLC780D_RW_GPIO_Port, .RW_Pin = SPLC780D_RW_Pin,
-
-			.RS_Port = SPLC780D_RS_GPIO_Port, .RS_Pin = SPLC780D_RS_Pin,
-
-	};
-	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
+	// Character display layers
 	CHAR_DISPLAY_t my_char_display;
 	CHAR_DISPLAY_ctor(&my_char_display, &my_char_display_driver);
 
-	CHAR_WRITE_data(&my_char_display, "HELLO FROM STM32", 0, 0);
-	CHAR_WRITE_data(&my_char_display,"written by Rayv",0,1);
-	CHAR_DISPLAY_buffer_flush(&my_char_display)
-;
-#ifdef ALGO
+	CHAR_CANVAS_t my_char_canvas;
+	CHAR_CANVAS_ctor(&my_char_canvas, &my_char_display);
+
+	/* ========================================================================
+	 * APPLICATION SUBSYSTEM INITIALIZATION
+	 * ======================================================================== */
+
+	// UI Controller
+	APP_UI_t app_ui;
+	APP_UI_ctor(&app_ui, &my_char_canvas);
+	APP_UI_setup_pages(&app_ui);
+	APP_UI_force_refresh(&app_ui);
+
+	// Game Engine
+	GAME_Engine_t my_game_engine;
+	GAME_ctor(&my_game_engine, &my_canvas);
+
+	// AI Player (always initialized - toggle via UI)
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
-#else
-	uint8_t counter_input = 0;
-#endif
+	log_message("MAIN", LOG_INFO, "AI player initialized and ready");
+
+	// FPS Counter
+	FPS_Counter_t fps_counter;
+	FPS_ctor(&fps_counter, 1000);
+	static char fps_string[16];
+
+	/* ========================================================================
+	 * TOP-LEVEL APPLICATION CONTROLLER
+	 * ======================================================================== */
+
+	APP_Controller_t app_controller;
+	APP_CONTROLLER_ctor(&app_controller, &my_game_engine, &app_ui, &my_input,
+			&my_algo_player);
+
+	/* ========================================================================
+	 * SETUP COMPLETE
+	 * ======================================================================== */
 
 	srand(HAL_GetTick());
+	log_message("MAIN", LOG_INFO, "System initialized, entering main loop");
 
 	uint32_t last_tick = 0;
-	uint8_t counter_render = 0, counter_tick = 0;
+	uint8_t counter_input = 0, counter_render = 0, counter_tick = 0;
 
 	/* USER CODE END 2 */
 
@@ -150,37 +188,65 @@ int main(void) {
 
 		if (now - last_tick >= (1000 / REFRESH_RATE)) { // 60 FPS
 			last_tick = now;
-#ifndef ALGO
-			if (++counter_input > REFRESH_RATE / INPUT_RATE) {
-				// 1. Get Input
+
+			/* ================================================================
+			 * INPUT PROCESSING (30 Hz)
+			 * ================================================================ */
+			if (++counter_input >= REFRESH_RATE / INPUT_RATE) {
 				counter_input = 0;
+
+				// 1. Poll hardware
 				KEYPAD_poll(&my_keypad);
-				GAME_update(&my_game_engine,INPUT_get_action(&my_input));
-			}
-#endif
 
-			if (++counter_tick > REFRESH_RATE / TICK_RATE) {
+				// 2. Controller routes input to appropriate subsystem
+				// - In MANUAL mode: input goes to game
+				// - In AI mode: input only for menu/settings
+				APP_CONTROLLER_process_input(&app_controller);
+			}
+
+			/* ================================================================
+			 * GAME LOGIC UPDATE (Dynamic: 5Hz for manual, 15Hz for AI)
+			 * ================================================================ */
+			// Use dynamic tick rate from game engine
+			uint8_t current_tick_rate = my_game_engine.level_tick_rate;
+			if (++counter_tick >= REFRESH_RATE / current_tick_rate) {
 				counter_tick = 0;
-#ifdef ALGO
-				GAME_update(&my_game_engine, ALGO_get_action(&my_algo_player));
-#endif
-				GAME_tick(&my_game_engine);
+
+				// Controller handles both MANUAL and AI mode:
+				// - MANUAL: Uses direction set by process_input
+				// - AI: Makes decision HERE at tick rate, then ticks game
+				APP_CONTROLLER_update(&app_controller);
 			}
 
-			if (++counter_render > REFRESH_RATE / RENDER_RATE) {
+			/* ================================================================
+			 * RENDERING (60 Hz)
+			 * ================================================================ */
+			if (++counter_render >= REFRESH_RATE / RENDER_RATE) {
 				counter_render = 0;
-				// 3. Draw Game to Buffer
-				GAME_render(&my_game_engine);
-			}
 
-			// 4. Push to Hardware
-			CANVAS_sync(&my_canvas);
-			DISPLAY_update(&my_pixel_display);
+				// 1. Render game and update UI stats
+				APP_CONTROLLER_render(&app_controller);
 
-			if (my_game_engine.game_over) {
-#ifdef ALGO
-				ALGO_reset(&my_algo_player);
-#endif
+				// 2. Push canvas to hardware
+				CANVAS_sync(&my_canvas);
+
+				// 3. Track FPS
+				uint32_t display_fps = FPS_tick(&fps_counter, now);
+
+				// 4. Update display hardware
+				DISPLAY_update(&my_pixel_display);
+
+				// 5. Display FPS on character LCD
+				static uint32_t last_fps = 0;
+				if (display_fps != last_fps) {
+					snprintf(fps_string, sizeof(fps_string), "%lu",
+							display_fps);
+					APP_UI_update_value(&app_ui, GAME_FPS, fps_string);
+					last_fps = display_fps;
+				}
+
+				// 6. Refresh UI if needed
+				APP_UI_refresh(&app_ui);
 			}
 		}
 	}
@@ -315,7 +381,7 @@ static void MX_GPIO_Init(void) {
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOB,
-			WS2812B_D_Pin | SPLC780D_RS_Pin | SPLC780D_RW_Pin | SPLC780D_E_Pin,
+	WS2812B_D_Pin | SPLC780D_RS_Pin | SPLC780D_RW_Pin | SPLC780D_E_Pin,
 			GPIO_PIN_RESET);
 
 	/*Configure GPIO pin : B1_Pin */
