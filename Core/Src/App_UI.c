@@ -15,9 +15,10 @@ static const char MAIN_PAGE_TEMPLATE[CHAR_DISP_COLS * CHAR_DISP_ROWS] =
     "FPS:                                    ";
 
 // Template for settings page (40x2 = 80 characters)
+// Mode display shows AI or MANUAL, use UP/DOWN to toggle
 static const char SETTINGS_PAGE_TEMPLATE[CHAR_DISP_COLS * CHAR_DISP_ROWS] =
     "        SETTINGS MENU                   "
-    "Sound: ON    Brightness: 75%            ";
+    "Mode:         [UP/DOWN to change]       ";
 
 void APP_UI_ctor(APP_UI_t * const me, CHAR_CANVAS_t * canvas) {
     me->canvas = canvas;
@@ -46,10 +47,14 @@ void APP_UI_setup_pages(APP_UI_t * const me) {
     // Setup SETTINGS_PAGE
     me->canvas->pages[SETTINGS_PAGE].static_template = SETTINGS_PAGE_TEMPLATE;
 
+    // "Mode: XXXXXX" - 6 characters starting at position 6, row 1
+    CHAR_CANVAS_obj_init(me->canvas, SETTINGS_PAGE, PLAY_MODE_DISPLAY, 6, 1, 6);
+
     // Initialize default values
     APP_UI_update_value(me, CURRENT_GAME_NUM, "0");
     APP_UI_update_value(me, TOTAL_GAME_WINS, "0");
     APP_UI_update_value(me, SNAKE_LEN, "3");
+    APP_UI_update_value(me, PLAY_MODE_DISPLAY, "AI    ");  // Default to AI
 
     // Force initial render
     me->needs_refresh = true;
@@ -87,4 +92,3 @@ void APP_UI_force_refresh(APP_UI_t * const me) {
     CHAR_CANVAS_render(me->canvas);
     me->needs_refresh = false;
 }
-

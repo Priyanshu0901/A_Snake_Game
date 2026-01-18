@@ -11,6 +11,7 @@
 #include "Game.h"
 #include "App_UI.h"
 #include "Input.h"
+#include "Algo.h"  // Always include - no more #ifdef
 #include <stdbool.h>
 
 /**
@@ -31,29 +32,40 @@ typedef enum {
 } APP_State_e;
 
 /**
+ * @brief Play mode selection (runtime switchable)
+ */
+typedef enum {
+    PLAY_MODE_MANUAL = 0,  // Human controls the snake
+    PLAY_MODE_AI           // AI controls the snake
+} APP_PlayMode_e;
+
+/**
  * @brief Top-level application controller
  *
  * Responsibilities:
- * - Route input to appropriate subsystem (Game vs UI)
+ * - Route input to appropriate subsystem (Game vs UI vs Mode Toggle)
  * - Manage application state transitions
  * - Coordinate updates between Game and UI
+ * - Handle AI/Manual mode switching (runtime toggle via UI)
  * - Prepare for future Audio integration
  */
 typedef struct {
     APP_State_e state;
     APP_State_e previous_state;  // For returning from settings
+    APP_PlayMode_e play_mode;    // Manual or AI control (runtime switchable)
 
     // Subsystem references
     GAME_Engine_t *game;
     APP_UI_t *ui;
     INPUT_t *input;
+    ALGO_t *ai_player;           // AI player (always available)
 
     // Control flags
-    bool game_needs_tick;    // Should GAME_tick() be called this frame?
-    bool ui_needs_update;    // Should UI stats be refreshed?
+    bool game_needs_tick;        // Should GAME_tick() be called this frame?
+    bool ui_needs_update;        // Should UI stats be refreshed?
 
     // Internal state tracking
-    bool game_was_paused;    // Track if we manually paused the game
+    bool game_was_paused;        // Track if we manually paused the game
 } APP_Controller_t;
 
 /**
@@ -62,11 +74,13 @@ typedef struct {
  * @param game Pointer to initialized game engine
  * @param ui Pointer to initialized UI controller
  * @param input Pointer to initialized input handler
+ * @param ai_player Pointer to initialized AI player
  */
 void APP_CONTROLLER_ctor(APP_Controller_t *me,
                          GAME_Engine_t *game,
                          APP_UI_t *ui,
-                         INPUT_t *input);
+                         INPUT_t *input,
+                         ALGO_t *ai_player);
 
 /**
  * @brief Process input and route to appropriate subsystem
@@ -81,6 +95,7 @@ void APP_CONTROLLER_process_input(APP_Controller_t *me);
  * @param me Pointer to APP_Controller instance
  * @note This should be called at the game tick rate (e.g., 5-15Hz)
  *       Only calls GAME_tick() when in PLAYING state
+ *       AI decisions are made HERE at tick rate, not input rate
  */
 void APP_CONTROLLER_update(APP_Controller_t *me);
 
@@ -90,6 +105,21 @@ void APP_CONTROLLER_update(APP_Controller_t *me);
  * @note This should be called at render rate (e.g., 60Hz)
  */
 void APP_CONTROLLER_render(APP_Controller_t *me);
+
+/**
+ * @brief Toggle between Manual and AI play modes
+ * @param me Pointer to APP_Controller instance
+ * @note Can be called during gameplay to switch modes on-the-fly
+ *       Triggered by UI menu selection
+ */
+void APP_CONTROLLER_toggle_play_mode(APP_Controller_t *me);
+
+/**
+ * @brief Get current play mode
+ * @param me Pointer to APP_Controller instance
+ * @return Current play mode (MANUAL or AI)
+ */
+APP_PlayMode_e APP_CONTROLLER_get_play_mode(APP_Controller_t *me);
 
 /**
  * @brief Force transition to a specific state

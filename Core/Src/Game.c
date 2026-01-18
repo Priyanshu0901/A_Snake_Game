@@ -93,6 +93,8 @@ void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas) {
 	me->game_counter = 0;
 	me->game_won_counter = 0;
 	me->game_state_has_updated = true;
+	me->level_tick_rate = 5;  // Default to manual mode speed
+
 	generate_food_color_lut();
 	generate_snake_rainbow_lut();
 	GAME_reset(me);
@@ -200,7 +202,8 @@ void GAME_update(GAME_Engine_t *const me, key_action_e const new_action) {
 
 void GAME_tick(GAME_Engine_t *const me) {
 	// Don't move if no direction set (game not started yet)
-	if (me->current_dir == ACTION_NONE) return;
+	if (me->current_dir == ACTION_NONE)
+		return;
 
 	move_snake(me);
 	check_collisions(me);
@@ -220,19 +223,11 @@ void GAME_render(GAME_Engine_t *const me) {
 
 void GAME_reset(GAME_Engine_t *const me) {
 	memset(me->body, 0, MAX_SNAKE_LEN * sizeof(C_COORDINATES_t));
-	me->game_over = true;
 
-	// Start in the center
 	me->body[0].x = rand() % DISPLAY_COLS;
 	me->body[0].y = rand() % DISPLAY_ROWS;
 	me->length = 1;
-
 	me->game_counter++;
-	me->game_state_has_updated = true;
-
-	me->current_dir = ACTION_NONE; // Wait for player input to start
-
-	log_message("GAME", LOG_INFO, "%d/%d", me->game_won_counter, me->game_counter);
-
+	me->current_dir = ACTION_NONE;
 	spawn_food(me);
 }

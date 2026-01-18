@@ -148,6 +148,11 @@ int main(void) {
 	GAME_Engine_t my_game_engine;
 	GAME_ctor(&my_game_engine, &my_canvas);
 
+	// AI Player (always initialized - toggle via UI)
+	ALGO_t my_algo_player;
+	ALGO_ctor(&my_algo_player, &my_game_engine);
+	log_message("MAIN", LOG_INFO, "AI player initialized and ready");
+
 	// FPS Counter
 	FPS_Counter_t fps_counter;
 	FPS_ctor(&fps_counter, 1000);
@@ -158,12 +163,8 @@ int main(void) {
 	 * ======================================================================== */
 
 	APP_Controller_t app_controller;
-	APP_CONTROLLER_ctor(&app_controller, &my_game_engine, &app_ui, &my_input);
-
-#ifdef ALGO
-	ALGO_t my_algo_player;
-	ALGO_ctor(&my_algo_player, &my_game_engine);
-#endif
+	APP_CONTROLLER_ctor(&app_controller, &my_game_engine, &app_ui, &my_input,
+			&my_algo_player);
 
 	/* ========================================================================
 	 * SETUP COMPLETE
@@ -197,27 +198,24 @@ int main(void) {
 				// 1. Poll hardware
 				KEYPAD_poll(&my_keypad);
 
-				// 2. Let controller route input to appropriate subsystem
-				// In ALGO mode, AI controls the game
-				GAME_update(&my_game_engine, ALGO_get_action(&my_algo_player));
+				// 2. Controller routes input to appropriate subsystem
+				// - In MANUAL mode: input goes to game
+				// - In AI mode: input only for menu/settings
 				APP_CONTROLLER_process_input(&app_controller);
 			}
 
 			/* ================================================================
-			 * GAME LOGIC UPDATE (5-15 Hz depending on mode)
+			 * GAME LOGIC UPDATE (Dynamic: 5Hz for manual, 15Hz for AI)
 			 * ================================================================ */
-			if (++counter_tick >= REFRESH_RATE / TICK_RATE) {
+			// Use dynamic tick rate from game engine
+			uint8_t current_tick_rate = my_game_engine.level_tick_rate;
+			if (++counter_tick >= REFRESH_RATE / current_tick_rate) {
 				counter_tick = 0;
 
-				// Controller decides if game should tick based on state
+				// Controller handles both MANUAL and AI mode:
+				// - MANUAL: Uses direction set by process_input
+				// - AI: Makes decision HERE at tick rate, then ticks game
 				APP_CONTROLLER_update(&app_controller);
-
-				// Reset ALGO if game ended
-#ifdef ALGO
-				if (my_game_engine.game_over) {
-					ALGO_reset(&my_algo_player);
-				}
-#endif
 			}
 
 			/* ================================================================

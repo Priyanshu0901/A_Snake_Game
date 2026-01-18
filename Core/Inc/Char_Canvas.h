@@ -16,7 +16,8 @@ typedef enum {
     CURRENT_GAME_NUM = 0,
     TOTAL_GAME_WINS,
     SNAKE_LEN,
-	GAME_FPS,
+    GAME_FPS,
+    PLAY_MODE_DISPLAY,  // ← NEW: Display "AI" or "MANUAL"
     MAX_OBJECTS
 } CHAR_CANVAS_obj_e;
 
