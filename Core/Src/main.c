@@ -21,9 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "Game.h"
 #include "Algo.h"
 #include <stdlib.h>
+#include "App_Controller.h"
 #include "FPS_counter_util.h"
 /* USER CODE END Includes */
 
@@ -96,52 +96,84 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
+	/* ========================================================================
+	 * HARDWARE DRIVER INITIALIZATION
+	 * ======================================================================== */
+
+	// Pixel Display (WS2812B LED Matrix)
 	DISPLAY_t my_pixel_display;
 	DISPLAY_ctor(&my_pixel_display, WS2812B_D_GPIO_Port, WS2812B_D_Pin);
+
+	// Keypad (4x4 matrix via PCF8574)
 	KEYPAD_t my_keypad;
 	KEYPAD_ctor(&my_keypad, &hi2c1);
 
+	// Character LCD Display (40x2 via SPLC780D)
+	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
+			.E_Pin = SPLC780D_E_Pin, .RW_Port = SPLC780D_RW_GPIO_Port, .RW_Pin =
+			SPLC780D_RW_Pin, .RS_Port = SPLC780D_RS_GPIO_Port, .RS_Pin =
+			SPLC780D_RS_Pin, };
+	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
+
+	/* ========================================================================
+	 * ABSTRACTION LAYER INITIALIZATION
+	 * ======================================================================== */
+
+	// Canvas for pixel display
 	CANVAS_t my_canvas;
 	CANVAS_ctor(&my_canvas, &my_pixel_display);
+
+	// Input handler
 	INPUT_t my_input;
 	INPUT_ctor(&my_input, &my_keypad);
 
-	SPLC780D_t my_char_display_driver = { .E_Port = SPLC780D_E_GPIO_Port,
-			.E_Pin = SPLC780D_E_Pin,
-
-			.RW_Port = SPLC780D_RW_GPIO_Port, .RW_Pin = SPLC780D_RW_Pin,
-
-			.RS_Port = SPLC780D_RS_GPIO_Port, .RS_Pin = SPLC780D_RS_Pin,
-
-	};
-	SPLC780D_ctor(&my_char_display_driver, &hi2c1);
+	// Character display layers
 	CHAR_DISPLAY_t my_char_display;
 	CHAR_DISPLAY_ctor(&my_char_display, &my_char_display_driver);
+
 	CHAR_CANVAS_t my_char_canvas;
 	CHAR_CANVAS_ctor(&my_char_canvas, &my_char_display);
+
+	/* ========================================================================
+	 * APPLICATION SUBSYSTEM INITIALIZATION
+	 * ======================================================================== */
+
+	// UI Controller
 	APP_UI_t app_ui;
 	APP_UI_ctor(&app_ui, &my_char_canvas);
 	APP_UI_setup_pages(&app_ui);
 	APP_UI_force_refresh(&app_ui);
 
+	// Game Engine
 	GAME_Engine_t my_game_engine;
-	GAME_ctor(&my_game_engine, &my_canvas, &my_input, &app_ui);
+	GAME_ctor(&my_game_engine, &my_canvas);
 
+	// FPS Counter
 	FPS_Counter_t fps_counter;
 	FPS_ctor(&fps_counter, 1000);
 	static char fps_string[16];
 
+	/* ========================================================================
+	 * TOP-LEVEL APPLICATION CONTROLLER
+	 * ======================================================================== */
+
+	APP_Controller_t app_controller;
+	APP_CONTROLLER_ctor(&app_controller, &my_game_engine, &app_ui, &my_input);
+
 #ifdef ALGO
 	ALGO_t my_algo_player;
 	ALGO_ctor(&my_algo_player, &my_game_engine);
-#else
-	uint8_t counter_input = 0;
 #endif
 
+	/* ========================================================================
+	 * SETUP COMPLETE
+	 * ======================================================================== */
+
 	srand(HAL_GetTick());
+	log_message("MAIN", LOG_INFO, "System initialized, entering main loop");
 
 	uint32_t last_tick = 0;
-	uint8_t counter_render = 0, counter_tick = 0;
+	uint8_t counter_input = 0, counter_render = 0, counter_tick = 0;
 
 	/* USER CODE END 2 */
 
@@ -155,59 +187,68 @@ int main(void) {
 
 		if (now - last_tick >= (1000 / REFRESH_RATE)) { // 60 FPS
 			last_tick = now;
-#ifndef ALGO
-			if (++counter_input >= REFRESH_RATE / INPUT_RATE) {
-				// 1. Get Input
-				counter_input = 0;
-				KEYPAD_poll(&my_keypad);
-				GAME_update(&my_game_engine,INPUT_get_action(&my_input));
-			}
-#endif
 
+			/* ================================================================
+			 * INPUT PROCESSING (30 Hz)
+			 * ================================================================ */
+			if (++counter_input >= REFRESH_RATE / INPUT_RATE) {
+				counter_input = 0;
+
+				// 1. Poll hardware
+				KEYPAD_poll(&my_keypad);
+
+				// 2. Let controller route input to appropriate subsystem
+				// In ALGO mode, AI controls the game
+				GAME_update(&my_game_engine, ALGO_get_action(&my_algo_player));
+				APP_CONTROLLER_process_input(&app_controller);
+			}
+
+			/* ================================================================
+			 * GAME LOGIC UPDATE (5-15 Hz depending on mode)
+			 * ================================================================ */
 			if (++counter_tick >= REFRESH_RATE / TICK_RATE) {
 				counter_tick = 0;
+
+				// Controller decides if game should tick based on state
+				APP_CONTROLLER_update(&app_controller);
+
+				// Reset ALGO if game ended
 #ifdef ALGO
-				GAME_update(&my_game_engine, ALGO_get_action(&my_algo_player));
+				if (my_game_engine.game_over) {
+					ALGO_reset(&my_algo_player);
+				}
 #endif
-				GAME_tick(&my_game_engine);
 			}
 
+			/* ================================================================
+			 * RENDERING (60 Hz)
+			 * ================================================================ */
 			if (++counter_render >= REFRESH_RATE / RENDER_RATE) {
 				counter_render = 0;
-				// 3. Draw Game to Buffer
-				GAME_render(&my_game_engine);
 
-				// Push to Hardware
+				// 1. Render game and update UI stats
+				APP_CONTROLLER_render(&app_controller);
+
+				// 2. Push canvas to hardware
 				CANVAS_sync(&my_canvas);
 
-				// *** Track FPS ONLY when DISPLAY_update is called ***
+				// 3. Track FPS
 				uint32_t display_fps = FPS_tick(&fps_counter, now);
 
+				// 4. Update display hardware
 				DISPLAY_update(&my_pixel_display);
 
-				// Display FPS on character LCD
+				// 5. Display FPS on character LCD
 				static uint32_t last_fps = 0;
 				if (display_fps != last_fps) {
 					snprintf(fps_string, sizeof(fps_string), "%lu",
 							display_fps);
 					APP_UI_update_value(&app_ui, GAME_FPS, fps_string);
-
 					last_fps = display_fps;
-#if CHAR_DISPLAY_USE_DIRTY_TRACKING
-					CHAR_DISPLAY_force_refresh(&my_char_display);
-#else
-				        			APP_UI_force_refresh(&app_ui);
-				        #endif
-
 				}
-			}
 
-			// 4. Push to Hardware
-
-			if (my_game_engine.game_over) {
-#ifdef ALGO
-				ALGO_reset(&my_algo_player);
-#endif
+				// 6. Refresh UI if needed
+				APP_UI_refresh(&app_ui);
 			}
 		}
 	}

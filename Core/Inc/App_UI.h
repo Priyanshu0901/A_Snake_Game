@@ -48,6 +48,8 @@ void APP_UI_setup_pages(APP_UI_t * const me);
  * @brief Process user input and update menu state
  * @param me Pointer to APP_UI instance
  * @param input Input event to process
+ * @note This is now primarily used for future menu navigation
+ *       Page switching is handled by APP_Controller
  */
 void APP_UI_process_input(APP_UI_t * const me, key_action_e input);
 

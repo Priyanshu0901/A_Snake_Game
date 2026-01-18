@@ -10,8 +10,6 @@
 #include <string.h>
 #include <math.h>
 
-static int game_counter = 0, game_won_counter = 0;
-
 #define FOOD_LUT_SIZE 20
 static PIXEL_t food_color_lut[FOOD_LUT_SIZE];
 
@@ -90,11 +88,11 @@ void generate_snake_rainbow_lut() {
 	}
 }
 
-void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas, INPUT_t *input,
-		APP_UI_t* ui) {
+void GAME_ctor(GAME_Engine_t *const me, CANVAS_t *canvas) {
 	me->canvas = canvas;
-	me->input = input;
-	me->UI = ui;
+	me->game_counter = 0;
+	me->game_won_counter = 0;
+	me->game_state_has_updated = true;
 	generate_food_color_lut();
 	generate_snake_rainbow_lut();
 	GAME_reset(me);
@@ -133,14 +131,7 @@ void move_snake(GAME_Engine_t *me) {
 
 void spawn_food(GAME_Engine_t *const me) {
 	if (MAX_SNAKE_LEN <= me->length) {
-		game_won_counter++;
-		char buffer[10];
-
-		// Update game number
-		snprintf(buffer, sizeof(buffer), "%u", game_won_counter);
-		APP_UI_update_value(me->UI, TOTAL_GAME_WINS, buffer);
-		// Refresh display
-		APP_UI_refresh(me->UI);
+		me->game_won_counter++;
 		GAME_reset(me);
 		return;
 	}
@@ -185,35 +176,32 @@ void check_collisions(GAME_Engine_t *const me) {
 		if (me->length < MAX_SNAKE_LEN) {
 			me->body[me->length] = me->body[me->length - 1];
 			me->length++; // Grow the snake
-			char buffer[10];
-			snprintf(buffer, sizeof(buffer), "%u", me->length);
-			APP_UI_update_value(me->UI, SNAKE_LEN, buffer);
-			APP_UI_refresh(me->UI);
+			me->game_state_has_updated = true;
 		}
 		spawn_food(me); // Place new food
 	}
 }
 
 void GAME_update(GAME_Engine_t *const me, key_action_e const new_action) {
-
-#ifndef ALGO
-	if(me->game_over && new_action != ACTION_NONE){
-		me->game_over = false;
-	}
-#endif
 	// Filter input to prevent 180-degree turns
+	// Only update direction if the new direction is valid
 	if (new_action == ACTION_UP && me->current_dir != ACTION_DOWN)
 		me->current_dir = ACTION_UP;
-	if (new_action == ACTION_DOWN && me->current_dir != ACTION_UP)
+	else if (new_action == ACTION_DOWN && me->current_dir != ACTION_UP)
 		me->current_dir = ACTION_DOWN;
-	if (new_action == ACTION_LEFT && me->current_dir != ACTION_RIGHT)
+	else if (new_action == ACTION_LEFT && me->current_dir != ACTION_RIGHT)
 		me->current_dir = ACTION_LEFT;
-	if (new_action == ACTION_RIGHT && me->current_dir != ACTION_LEFT)
+	else if (new_action == ACTION_RIGHT && me->current_dir != ACTION_LEFT)
 		me->current_dir = ACTION_RIGHT;
 
+	// NOTE: Pause/unpause logic has been REMOVED
+	// The APP_Controller now manages game_over state externally
 }
 
 void GAME_tick(GAME_Engine_t *const me) {
+	// Don't move if no direction set (game not started yet)
+	if (me->current_dir == ACTION_NONE) return;
+
 	move_snake(me);
 	check_collisions(me);
 }
@@ -233,23 +221,18 @@ void GAME_render(GAME_Engine_t *const me) {
 void GAME_reset(GAME_Engine_t *const me) {
 	memset(me->body, 0, MAX_SNAKE_LEN * sizeof(C_COORDINATES_t));
 	me->game_over = true;
+
 	// Start in the center
 	me->body[0].x = rand() % DISPLAY_COLS;
 	me->body[0].y = rand() % DISPLAY_ROWS;
 	me->length = 1;
 
-	game_counter++;
-	char buffer[10];
-
-	// Update game number
-	snprintf(buffer, sizeof(buffer), "%u", game_counter);
-	APP_UI_update_value(me->UI, CURRENT_GAME_NUM, buffer);
-	// Refresh display
-	APP_UI_refresh(me->UI);
+	me->game_counter++;
+	me->game_state_has_updated = true;
 
 	me->current_dir = ACTION_NONE; // Wait for player input to start
 
-	log_message("GAME", LOG_INFO, "%d/%d", game_won_counter, game_counter);
+	log_message("GAME", LOG_INFO, "%d/%d", me->game_won_counter, me->game_counter);
 
 	spawn_food(me);
 }

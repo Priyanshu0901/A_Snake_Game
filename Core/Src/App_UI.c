@@ -40,7 +40,7 @@ void APP_UI_setup_pages(APP_UI_t * const me) {
     // "Snake Len: XXX" - 3 digits starting at position 35, row 0
     CHAR_CANVAS_obj_init(me->canvas, MAIN_PAGE, SNAKE_LEN, 35, 0, 3);
 
-    // "Snake Len: XXX" - 3 digits starting at position 35, row 0
+    // "FPS: XXX" - 3 digits starting at position 6, row 1
     CHAR_CANVAS_obj_init(me->canvas, MAIN_PAGE, GAME_FPS, 6, 1, 3);
 
     // Setup SETTINGS_PAGE
@@ -56,31 +56,17 @@ void APP_UI_setup_pages(APP_UI_t * const me) {
 }
 
 void APP_UI_process_input(APP_UI_t * const me, key_action_e input) {
-    // Current implementation: single page, no input changes
-    // This can be extended for multi-page navigation
+    // NOTE: Page switching is now handled by APP_Controller
+    // This function is reserved for future menu navigation (up/down to select items, etc.)
 
-    switch (me->current_state) {
-        case MENU_STATE_MAIN:
-            if (input == ACTION_CONFIRM) {
-                // Future: transition to settings
-                // CHAR_CANVAS_switch_page(me->canvas, SETTINGS_PAGE);
-                // me->current_state = MENU_STATE_SETTINGS;
-                // me->needs_refresh = true;
-            }
-            break;
+    // For now, this is a placeholder for extensibility
+    // Future features could include:
+    // - UP/DOWN to navigate menu items
+    // - LEFT/RIGHT to adjust settings values
+    // - Visual selection highlighting
 
-        case MENU_STATE_SETTINGS:
-            if (input == ACTION_CONFIRM) {
-                // Future: return to main
-                // CHAR_CANVAS_switch_page(me->canvas, MAIN_PAGE);
-                // me->current_state = MENU_STATE_MAIN;
-                // me->needs_refresh = true;
-            }
-            break;
-
-        default:
-            break;
-    }
+    (void)me;    // Suppress unused parameter warning
+    (void)input;
 }
 
 void APP_UI_update_value(APP_UI_t * const me, CHAR_CANVAS_obj_e obj_type, const char * value) {
@@ -101,3 +87,4 @@ void APP_UI_force_refresh(APP_UI_t * const me) {
     CHAR_CANVAS_render(me->canvas);
     me->needs_refresh = false;
 }
+

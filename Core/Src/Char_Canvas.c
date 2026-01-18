@@ -12,6 +12,8 @@
 // Use a private constant for the total screen area
 static const uint16_t TOTAL_CELLS = CHAR_DISP_COLS * CHAR_DISP_ROWS;
 
+static CHAR_CANVAS_Pages_e obj_to_canvas[MAX_OBJECTS];
+
 void CHAR_CANVAS_ctor(CHAR_CANVAS_t * const me, CHAR_DISPLAY_t * display_driver) {
     me->display = display_driver;
     me->has_updated = false;
@@ -28,6 +30,8 @@ void CHAR_CANVAS_ctor(CHAR_CANVAS_t * const me, CHAR_DISPLAY_t * display_driver)
 void CHAR_CANVAS_obj_init(CHAR_CANVAS_t * const me, CHAR_CANVAS_Pages_e page, CHAR_CANVAS_obj_e type, uint8_t x, uint8_t y, uint8_t len) {
     if (type >= MAX_OBJECTS || page >= TOTAL_PAGES) return;
 
+    obj_to_canvas[type] = page; // associates obj page
+
     CHAR_CANVAS_obj_t *obj = &me->pages[page].variable_objs[type];
     obj->x = x;
     obj->y = y;
@@ -43,7 +47,7 @@ void CHAR_CANVAS_obj_init(CHAR_CANVAS_t * const me, CHAR_CANVAS_Pages_e page, CH
 void CHAR_CANVAS_update_obj(CHAR_CANVAS_t * const me, CHAR_CANVAS_obj_e type, const char * str) {
     if (type >= MAX_OBJECTS || me->canvas_buffer == NULL) return;
 
-    CHAR_Page_t *page = &me->pages[me->current_page_idx];
+    CHAR_Page_t *page = &me->pages[obj_to_canvas[type]];
     CHAR_CANVAS_obj_t *obj = &page->variable_objs[type];
 
     if (obj->buffer == NULL) return;
